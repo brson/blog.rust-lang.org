@@ -7,66 +7,86 @@ description: ""
 
 Rust is a software platform with the potential to run on anything with
 a CPU. Think of anything that Runs software, and I bet we can get Rust
-on it. Someday. Personally, I want to see Rust inside of spaceships.
+on it. Someday. Personally, I want to see Rust inside of rocketships
+(call me, SpaceX!).
 
 The reason Rust is so flexible is that it is carefully designed to
 depend only on the capabilities of real hardware, and to make no
 assumptions whatever of its software environment. Pursuing this design
 was greatly aided by building off of the world-class hardware
-abstraction layer, [LLVM]. (gush about llvm)
+abstraction layer, [LLVM].
 
-And so today Rust can already run on nearly every modern CPU one can get
-their hands on. But beyond that the Rust model is simple enough to
+[LLVM]: http://llvm.org
+
+And so today Rust can already run on nearly every modern CPU one can
+get their hands on. But beyond that the Rust model is simple enough to
 target nearly any *software platform* as well. Today Rust runs in some
-capacity on Windows, Linux, Mac OS X, Android, iOS, all the BSD's,
-including [NetBSD rump kernels], in [custom operating systems][redox].
-It makes a lot of sense as [glue between other languages][skylight].
+capacity on Windows, Linux, Mac OS X, Android, iOS, all the BSD's
+(including [NetBSD rump kernels]), and in [operating systems written
+entirely in Rust][redox].
 
-* Rust runs on embedded Linux systems ([tessel], [rpi]).
-* Rust runs on ARM bare metal ([zinc]).
-* Rust is easy to deploy to the cloud with [statically linked linux binaries][musl],
-* Rust runs on [seL4 unikernels]
-* Rust powers web servers, like [iron] and [nickel]. Both [crates.io]
-  and [crater] are written in Rust.
-* Rust has been compiled to video game systems (ps),
-* Rust runs on mips routers.
+[NetBSD rump kernels]: https://gandro.github.io/2015/09/27/rust-on-rumprun/
+[redox]: http://redox-os.org/
 
-[redox]:
-[LLVM]:
-[rump kernels]:
-[skylight]:
-[interpret]: TODO that mir report
+Rust can do some things.
+
+It makes a lot of sense as glue between other languages, [enhancing
+your Ruby], or [enhancing your JavaScript], or [enhancing your Lua],
+or [enhancing your Erlang], with Rust's screaming performance. Rust's
+first use in production was to [speed up a Ruby codebase].
+
+[enhancing your Ruby]: https://github.com/anima-engine/mrusty
+[enhancing your JavaScript]: https://github.com/rustbridge/neon
+[enhancing your Lua]: https://github.com/tomaka/hlua
+[enhancing your Erlang]: https://github.com/hansihe/Rustler
+[speed up a Ruby codebase]: http://blog.skylight.io/bending-the-curve-writing-safe-fast-native-gems-with-rust/
+
+Rust can do some cool, cool things. It kinda just fits everywhere.
+
+* Rust runs on the [seL4 microkernel].
+* Rust runs on embedded Linux systems [like the Raspberry Pi 3], and the [Tessel].
+* Rust is easy to deploy to the cloud with [statically linked Linux binaries][musl],
+* Rust powers web servers, like [iron] and [nickel]. [crates.io] is written in Rust.
+* Rust runs on [bare metal ARM] with tools like [xargo] and [zinc].
+* Rust runs on [MIPS routers running OpenWRT][OpenWRT].
+
+[like the Raspberry Pi 3]: http://mirrors.link/posts/cross-compiling-rust-on-os-x-for-raspberry-pi-3
+[Tessel]: http://www.tessel.io
+[bare metal ARM]: https://blog.thiago.me/raspberry-pi-bare-metal-programming-with-rust/
+[xargo]: https://github.com/japaric/xargo
+[zinc]: http://zinc.rs/
+[musl]: https://www.reddit.com/r/rust/comments/4aq5bm/a_container_to_generate_static_rust_executables/
+[seL4 microkernel]: https://air.mozilla.org/bay-area-rust-meetup-april-2016/
+[iron]: http://ironframework.io/
+[nickel]: http://nickel.rs/
+[crates.io]: https://crates.io
+[OpenWRT]: https://github.com/japaric/rust-on-openwrt
 
 So, damn, Rust is already practically everywhere. That is, it's
-*possible* to run Rust damn near everywhere. It is not *easy*
+*possible* to run Rust practically everywhere. It is not *easy*
 though. There's a lot of tooling necessary to support every target:
-compiler, linker, standard library, headers and possibly binaries for
-system C libraries. And when considering cross-compilation, the exact
-set of tools can be different for every pair of host platform (that
-which the compiler runs on) and target platform (that which the
-compiler's output runs on).
+compiler, linker, standard library, headers and binaries for system C
+libraries. And when [considering cross-compilation][x], the exact set
+of tools can be different for every pair of host platform (that which
+your compiler runs on) and target platform (that which your compiled
+programs run on).
 
-It's rapidly getting easier to apply Rust to anything you
-can imagine.
+[x]: https://github.com/japaric/rust-cross
 
-Exciting things are happening in Rust platform support right now, and
-we want to share our excitement for them, with you. Woo!
+But it's rapidly getting easier to apply Rust to anything you can
+imagine. Exciting things are happening in Rust platform support right
+now, and we want to share our excitement for them, with you.
 
-As of Rust *1.10* The Rust Project publishes [`rustc` binaries for 14
-platforms, and `std` binaries for 30][platforms].
-
-Needs to be easier to access the tools for these platforms. linkers ndks
-
-Todo mention nightlies.
-
-
+Woo-hoo-hoo! 🚀
 
 ## Introducing rustup
 
-`rustup` is a new installer for Rust. It does a few small things that
-make working with Rust simpler.
+[rustup] is a new installer for Rust. It does a few small things that
+make working with Rust more convenient.
 
-We created this installer primarily to create a more consistent
+[rustup]: https://www.rustup.rs
+
+We created this installer primarily to make a more consistent
 development environment between Windows and Unix. Through rustup, all
 Rust developers will share convenient access to all the binaries
 published in each release, including nightlies and betas.
@@ -75,31 +95,32 @@ rustup gives you 2 cool superpowers:
 
 * Install all Rust releases for any supported platform,
   and switch between them, including the beta and nightly releases.
-* Install the standard library for any platform your mind can
-  imagine. No, not for real. But maybe.
+* Install the standard library for a growing number of common
+  platforms.
 
-Today rustup is a command line program, but it's also a [library],
-intended for use by graphical installers, particularly on Windows,
-where it's not expected to need to use the command line, even for
-development.
+Today rustup is a command line application, and I'm going to show you
+some examples of what it can do, [but it's also a Rust library], and
+eventually these features are expected to be presented through a
+graphical interface where appropriate, particularly on Windows.
 
-### Superpower #1
+## Superpower #1: toolchain multiplexing
 
-So let's talk about the first superpower and why it's so super-duper:
-installing the Rust compiler.
+rustup is an installer.
 
-That doesn't sound very special. You can install the Rust compiler
-today in a number of ways. If you go to [the rust-lang.org download
-page] there are several options presented right there. If you are
-on the hippest Linux distributions it may have a package for you
-to install. OS X operators can get Rust and Cargo through homebrew.
+Why is this special? Even today you can install the Rust compiler in
+a number of ways. If you go to [the rust-lang.org download page][dl]
+there are several options presented right there; if you are on the
+hippest Linux distributions it may have a package for you to install;
+OS X operators can get Rust and Cargo through homebrew; etc.
+
+[dl]: https://www.rust-lang.org/downloads.html
 
 rustup is yet another way to install Rust!
 
-Exciting.
+How exciting.
 
 So let's see something basic that rustup does: installing multiple
-Rust toolchains. In this example I create a new flibrary, 'hello',
+Rust toolchains. In this example I create a new library, 'hello',
 then test it using rustc 1.8, then use rustup to install and test that
 same crate on the 1.9 beta.
 
@@ -121,23 +142,27 @@ $ rustup run beta cargo test
 ```
 -->
 
-TODO: Add `rustup install`
+TODO: Add `rustup install` to rustup
 
 That's an easy way to verify your code works on the next Rust
 release. That's good Rust citizenship!
 
-So that is already not so easy to replicate using other installers:
+So this is already not so easy to replicate using other installers:
 with one `rustup install` command we added the current Rust beta to
 our local Rust arsenal. If we were using the individual release
 tarballs we would need to download the beta from the website. We'd
-install it to a different location than the stable release then, to
-test against beta would probably set the `RUSTC` environment variable
-when calling `cargo`. On Windows, it would be similar, but we'd need
-to use the Windows-specific installers, and the directory names would
-be different.
+install it to a different location than the stable release. Then, to
+test against beta we would probably set the `RUSTC` environment
+variable when calling `cargo`, or perhaps we would adjust the `PATH`
+variable to find the beta toolchain instead of the stable
+toolchain. On Windows, it would be similar, but we'd need to use the
+Windows-specific installers, and the directory names would be
+different.
 
-To round out our collection of Rust compilers, let's go ahead and
-install the nightly build too:
+TODO say something here
+
+To extend the previous example, let's round out our collection of Rust
+compilers by installing nightly as well:
 
 ```
 $ rustup install nightly
@@ -154,28 +179,30 @@ info: installing component 'cargo'
   nightly-x86_64-unknown-linux-gnu installed - rustc 1.10.0-nightly (8da2bcac5 2016-04-28)
 
 $ rustup show
-installed toolchains:
+installed toolchains
+--------------------
 
 stable-x86_64-unknown-linux-gnu (default)
 beta-x86_64-unknown-linux-gnu
 nightly-x86_64-unknown-linux-gnu
 
-active toolchain:
+active toolchain
+----------------
 
 stable-x86_64-unknown-linux-gnu (default)
 
-rustc 1.9.0-beta.1 (37a2869af 2016-04-12)
-cargo 0.9.0-nightly (8fc3fd8 2016-02-29)
+rustc 1.8.0 (db2939409 2016-04-11)
 ```
 
 TODO: Implement 'show'
 
-So in addition to stable, we've also got the beta and nightly
-toolchains at our disposal. These three toolchains correspond to the
-Rust release channels and are updated periodically. If we wait 24
-hours we should expect the Rust developers to publish a new nightly
-that we'll want to get ahold of. If we wait 6 weeks there will be a
-new stable release. We can update all of them with `rustup update`:
+`rustup show` indicates that, in addition to stable, we've also got
+the beta and nightly toolchains at our disposal. These three
+toolchains correspond to the Rust release channels and are updated
+periodically. If we wait 24 hours we should expect the Rust developers
+to publish a new nightly that we'll want to get ahold of. If we wait 6
+weeks there will be a new stable release. We can update all of them
+with `rustup update`:
 
 <script type="text/javascript"
 	src="https://asciinema.org/a/6tajyqzhhh90wuelptqdsdhn5.js"
@@ -184,9 +211,12 @@ new stable release. We can update all of them with `rustup update`:
 	data-speed="2"
 ></script>
 
-rustup can also change the default toolchain with `rustup default`:
+One last important feature: rustup can also change the default
+toolchain with `rustup default`:
 
 ```
+$ rustc --version
+rustc 1.8.0 (db2939409 2016-04-11)
 $ rustup default 1.7.0
 info: syncing channel updates for '1.7.0-x86_64-unknown-linux-gnu'
 info: downloading component 'rust'
@@ -199,44 +229,325 @@ $ rustc --version
 rustc 1.7.0 (a5d1e7a59 2016-02-29)
 ```
 
-Woah, dude! That's totally gnarly-rad! We can make `rustc` be any
-`rustc` we want it to be. It'll even be old grandpa `rustc` 1.0 if we
-tell it to. You're old, 1.0. Die alone.
-
-In addition to being an installer, rustup is also a Rust toolchain
-*multiplexer*: with rustup installed, when you call `rustc` or `cargo`
+We can make `rustc` be any `rustc` we want it to be. It'll even be old
+grandpa `rustc` 1.0 if we tell it to with `rustup default 1.0.0`. In
+addition to being an installer, rustup is also a Rust toolchain
+multiplexer: with rustup installed, when you call `rustc` or `cargo`
 (or any other command distributed with Rust) you are calling a proxy
 binary, installed by rustup, that in turn calls the compiler from a
 particular Rust toolchain. In this way rustup is similar to the
 [rbenv] and [pyenv] tools for Ruby and Python.
 
-This layer of indirection makes some useful things possible. For
-example, on windows where Rust supports both the GNU and MSVC ABI, you
+[rbenv]: https://github.com/rbenv/rbenv
+[pyenv]: https://github.com/yyuu/pyenv
+
+This layer of indirection enables some useful things. For example, on
+Windows [where Rust supports both the GNU and MSVC ABI][abi], you
 might want to switch from the default stable toolchain on Windows,
 which targets the 32-bit x86 architecture and the GNU ABI, to the a
 stable toolchain that targets the 64-bit, MSVC ABI.
 
+[abi]: https://www.rust-lang.org/downloads.html#win-foot
+
 ```
 $ rustup default stable-x86_64-pc-windows-msvc
-$ TODO
+TODO
 ```
 
 Here the "stable" toolchain name is appended with an extra identifier
 indicating the compiler's architecture, in this case
 `x86_64-pc-windows-msvc`. This identifier is called a "target triple":
 "target" because it specifies a platform for which the compiler
-generates machine code; and "triple" for historical reasons. Target
+generates (targets) machine code; and "triple" for historical reasons
+(in many cases "triples" are actually quads these days). Target
 triples are the basic way we refer to particular common platforms,
 `rustc` by default knows about 56 of them, and `rustup` today can
-obtain binaries of some kind for 30.
+obtain compilers for 14, and standard libraries for 30 [†].
 
-# Superpower #2
+[†]: #appendix-rustup-supported-platforms
+
+## Superpower #2: standard library installation
+
+When you install the Rust compiler you also install the Rust standard
+library for a single target. And even though you only have that one
+standard library, your compiler can generate code for every platform
+Rust supports.
+
+The standand library is not (yet, yet, ..) distributed through Cargo like
+most crates, so to get ahold of it you'll have to [build it yourself],
+or use a tool like [xargo] to build it for you.
+
+[build it yourself]: https://github.com/japaric/rust-cross
+[xargo]: https://github.com/japaric/xargo
+
+Or you can use one that *we* built for you!
+
+Check out how I greedily acquire all these stds:
+
+```
+TODO: screencast of ridiculous combination of targets
+$ rustup show
+installed targets for stable-x86_64-unknown-linux-gnu
+-----------------------------------------------------
+
+x86_64-unknown-linux-gnu
+i686-unknown-linux-gnu
+etc.
+
+active toolchain
+----------------
+
+stable-x86_64-unknown-linux-gnu (default)
+
+rustc 1.8.0 (db2939409 2016-04-11)
+```
+
+TODO: implement 'show'
+
+So it's easy to get those stds, but whether you can actually compile
+to them still depends on a lot of factors. If you try to compile
+for Linux PowerPC from Windows x86_64 (that is, `powerpc-unknown-linux-gnu`
+from <code>x86&#95;64-pc-windows-gnu</code>) it's not going to just work:
+
+```
+$ rustup target add powerpc-unknown-linux-gnu
+info: downloading component 'rust-std' for 'powerpc-unknown-linux-gnu'
+info: installing component 'rust-std' for 'powerpc-unknown-linux-gnu'
+$ cargo build --target=powerpc-unknown-linux-gnu
+   Compiling hello v0.1.0 (file:///C:/Users/brian/Documents/dev/hello)
+error: could not exec the linker `cc`: The system cannot find the file specified. (os error 2)
+error: Could not compile `hello`.
+```
+
+That's an error, and it's not as incomprehensible as I might fear!
+There are two things to note here. First, `rustc` failed to execute
+the linker. Linking is the final stage of compilation, where the
+object files filled with machine code produced by `rustc`, `gcc` and
+other compilers, are combined into a final executable. Linking is
+also shockingly difficult when cross-compiling.
+
+Linkers have some baggage: there aren't a lot of them, they things
+they do are not well documented, and they originate in a pre-LLVM era,
+when cross-compilation was rare and crazy and difficult. As a result,
+a single linker tends to target few platforms, whereas a single build
+of `rustc` can generate machine code for any platform LLVM supports.
+
+The second curious thing to note here is that `rustc` identified
+the linker as `cc`: it is trying to use a C compiler to link! TODO
+
+So `rustc` is ultimately subject to the whims of whatever C compiler
+and linker happen to be available on your computer. Someday Rust will
+have its own linker, and someday Rust won't require a gcc-compatible
+compiler to drive it. In the meantime, rustup and other tools will
+keep trying to patch together all the pieces to make cross-compilation
+as easy as it should be.
+
+For now though it's messy. Let's see some of that mess!
+
+## Example: Building static binaries on Linux
+
+Linux is everywhere now, and one of its unique features that has
+become increasingly appreciated is its stable syscall
+interface. Because the Linux kernel puts exceptional effort into
+maintaining a backward compatible kernel interface, it's possible to
+distribute [ELF] binaries with no dynamic library dependencies that
+will run on any version of Linux. Besides being one of the features
+that make Docker possible, it also allows developers to build
+self-contained applications and deploy them to any machine running
+Linux, regardless of whether it's Ubuntu or Fedora or any other
+distribution, and regardless of exact mix of software libraries they
+have installed.
+
+[ELF]: https://en.wikipedia.org/wiki/Executable_and_Linkable_Format
+
+This is one of the features that makes Go very attractive for cloud
+deployments: the Go standard library does not depend on the C
+standard library (or any other library), so Go binaries are very
+portable. In contrast, the Rust standard library depends on features
+in libc (at least in all implementations that exist today and for the
+foreseeable future). So to produce a Linux binary with no dependencies
+on dynamic libraries, Rust needs to statically link to libc.
+
+Typical Linux desktop systems build their software on [glibc], the GNU
+C standard library, but it is common to find Linux systems that use
+others: Android runs [BIONIC], and [Alpine Linux] runs [musl][] [††]. The
+systems we do our development on though are almost universally based
+on glibc, and *one of glibc's support libraries, libgcc, cannot be
+linked statically*, [due to TODO some issues involving stack
+unwinding]. So by default, `rustc` produces software that depends on a
+dynamically linked glibc. It's possible still to produce binaries that
+are *highly compatible* with previous versions of glibc - we build our
+Linux binaries in a [heavily modified CentOS 5 Docker
+container][gross] to do so - but to produce maximally compatible binaries we
+need to use a different C library.
+
+[glibc]: https://www.gnu.org/software/libc/
+[BIONIC]: https://github.com/android/platform_bionic
+[musl]: http://www.musl-libc.org/
+[Alpine Linux]: http://alpinelinux.org/
+[††]: #appendix-disclaimers
+[gross]: https://github.com/rust-lang/rust-buildbot/tree/master/slaves/dist
+
+In Today's Rust we do that by linking to [musl] instead. musl is
+small, modern implementation of libc, and it can be linked entirely
+statically. Rust has been compatible with musl since TODO, but until
+recently developers have needed to build their own compiler to do so.
+
+With that background, let's walk through compiling a statically-linked
+Linux executable. For this example you'll want to be running Linux -
+that is, your *host platform* will be Linux, and your *target
+platform* will also be Linux, just a different flavor of Linux. It's
+theoretically possible to cross-compile to Linux from any other
+platform, but it's not yet well-supported by Rust.
+
+I'm going to be running on Ubuntu 16.04 (using this TODO docker
+image). We'll be building the basic hello world:
+
+```
+$ cargo new --bin hello && cd hello
+cargo run
+   Compiling hello v0.1.0 (file:///hello)
+     Running `target/debug/hello`
+Hello, world!
+```
+
+That's with the default `x86_64-unknown-linux-musl` target. And you can
+see it's got lots of dynamic dependencies:
+
+```
+$ ldd target/debug/hello
+        linux-vdso.so.1 =>  (0x00007ffe3d3b5000)
+        libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f823d25b000)
+        libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f823d03e000)
+        libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f823ce27000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f823ca5e000)
+        /lib64/ld-linux-x86-64.so.2 (0x0000555ac8913000)
+        libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f823c755000)
+```
+
+To compile for musl instead call `cargo` with the argument
+`--target=x86_64-unknown-linux-musl`. If we just go ahead and try that
+we'll get an error:
+
+```
+$ cargo run --target=x86_64-unknown-linux-musl
+   Compiling hello v0.1.0 (file:///C:/Users/brian/Documents/dev/hello)
+error: can't find crate for `std` [E0463]
+error: aborting due to previous error
+error: Could not compile `hello`.
+...
+
+```
+
+The error tells us that the compiler can't find `std`. That is of
+course because we haven't installed it.
+
+```
+$ rustup target add x86_64-unknown-linux-gnu
+info: downloading component 'rust-std' for 'x86_64-unknown-linux-musl'
+info: installing component 'rust-std' for 'x86_64-unknown-linux-musl'
+$ rustup show
+installed targets for stable-x86_64-unknown-linux-gnu
+-----------------------------------------------------
+
+x86_64-unknown-linux-gnu
+x86_64-unknown-linux-musl
+
+active toolchain
+----------------
+
+stable-x86_64-unknown-linux-gnu (default)
+
+rustc 1.8.0 (db2939409 2016-04-11)
+```
+
+So I'm running the 1.8 toolchain for 64-bit Linux on x86, as indicated
+by the `x86_64-unknown-linux-gnu` target triple, and now I can also
+target `x86_64-unknown-linux-musl`. Neat. Now we're surely ready to
+build a slick statically-linked binary we can release into the
+cloud. Let's try:
+
+```
+$ cargo run --target=x86_64-unknown-linux-musl
+   Compiling hello v0.1.0 (file:///hello)
+     Running `target/x86_64-unknown-linux-musl/debug/hello`
+Hello, world!
+```
+
+And ... that, just worked? Hell, yeah! No need to mess with the linker
+at all. This surprised me when I was writing this - I thought I would
+have to install `musl-gcc` from the Ubuntu package repository, but
+nope. Just works. Run `ldd` on it for proof that it's the real deal:
+
+```
+ldd target/x86_64-unknown-linux-musl/debug/hello
+        not a dynamic executable
+```
+
+So, uh. That's it! take that `hello` binary and copy it to any
+x86_64 machine running Linux and it'll just work.
+
+Knock on wood. 🚀
+
+## Example: Running Rust on Android from Windows
+
+## Example: Zephyr hello world (nightly)
+
+## Rust everywhere else
+
+future work
+
+learn more
+
+Today Rust runs on ..... Tomorrow it will run everywhere, even in spaceships.
+
+Tomorrow it will run on the web [via web web assembly and asm.js].
+
+tommorow: wasm, interpreters
+
+contributing
+
+thanks
+
+
+
+
+
+## (†) Appendix: rustup supported platforms
+
+Today, rustup blah blah...
+
+rustup itself runs on:
+
+rustup can install compilers for:
+
+rustup can install std for:
+
+## (††) Appendix: disclaimers
+
+Sorry Rust doesn't work on Alpine Linux yet!
+
+
+## notes
+
+updating
+cross-compiling
+brag about platform support
+future ndk support
+emscripten
+embedded screen-captures
+source
+
+see what we can use from japaric
+https://github.com/emk/rust-musl-builder
+https://www.reddit.com/r/rust/comments/4f6bs9/rustmuslbuilder_a_docker_image_for_building/
 
 
 
 
 
 
+### Rustup notes
 
 * Keeps Windows installation at feature parity with Unix
 * Switch between versions of Rust easily
@@ -248,8 +559,6 @@ obtain binaries of some kind for 30.
 * It centralizes Rust tools in ~/.cargo/bin
 * Written in Rust for portability and maintainability
 * Written as a library for use in GUI installers and IDEs
-
-
 
 Some history.
 
@@ -275,18 +584,8 @@ $ rustup install
 
 TODO: just make install work
 
-
-
-Talk about cross-compilation and linking.
-
-Talk about host and target, target triples.
-
-All examples will be using the basic hello world
-project created by calling `cargo new --bin hello`.
-
-TODO: Show animation of rustup in action
-
-Mention MSVC is default (and make it so).
+* Talk about cross-compilation and linking.
+* Talk about host and target, target triples.
 
 If you are already convinced and just want to get on with it,
 visit [www.rustup.rs] to install `rustup`.
@@ -299,187 +598,12 @@ Rust users. TODO: about Windows GUI
 Reletaionship between rust / cargo.
 
 
-## Example: Building static binaries on Linux
 
-TODO: Explain that this example intentionally shows
-a bunch of errors for reasons
+## Qs
 
-Linux is everywhere now, and one of its unique features that has
-become increasingly appreciated is its stable syscall
-interface. Because the Linux kernel [puts exceptional effort into
-maintaining a backward compatible kernel interface], it's possible to
-distribute [ELF] binaries with no dynamic library dependencies that
-will run on any version of Linux. Besides being one of the feaatures
-that make [Docker] possible, it also allows developers to build
-self-contained applications and deploy them to any machine running
-Linux, regardless of whether it's Ubuntu or Fedora or any other
-distribution, and regardless of exact mix of software libraries they
-have installed.
+Need evidence for libgcc being unstatically-linkable.
+Should I implement `rustup install`?
+Should I implement shown `rustup show` features?
 
-This is one of the features that [makes Go very attractive for cloud
-deployments]: the Go standard library does not depend on the C
-standard library (or any other library), so Go binaries are very
-portable. In contrast, the Rust standard library depends on features
-in libc (at least in all implementations that exist today and for the
-forseeable future). So to produce a Linux binary with no dependencies
-on dynamic libraries, Rust needs to statically link to libc.
+TODO: omg 'aborting due to previous error', inconsistent capitalization in errors
 
-Typical Linux desktop systems build their software on [glibc], the GNU
-C standard library, but it is common to find Linux systems that use
-others: Android runs [BIONIC], and [Alpine Linux] runs [musl]. The
-systems we do our development on though are almost universally based
-on glibc, and *one of glibc's support libraries, libgcc, cannot be
-linked statically*, [due to TODO some issues involving stack
-unwinding]. So by default, rustc produces software that depends on a
-dynamically linked glibc. It's possible still to produce binaries that
-are *highly compatible* with previous versions of glibc - we build our
-Linux binaries in a [TODO grotesquely modified CentOS 5 Docker
-container] to do so - but to produce maximally compatible binaries we
-need to use a different C library.
-
-In Today's Rust we do that by linking to [musl] instead. musl is
-small, modern implementation of libc, and it can be linked entirely
-statically. Rust has been compatible with musl since TODO, but until
-recently developers have needed to build their own compiler to do so.
-
-With that background, let's walk through compiling a statically-linked
-Linux executable. For this example you'll want to be running Linux -
-that is, your *host platform* will be Linux, and your *target
-platform* will also be Linux, just a different flavor of Linux. It's
-theoretically possible to cross-compile to Linux from any other
-platform, but it's not yet well-supported by Rust.
-
-I'm going to be running on Ubuntu TODO (using this TODO docker image
-if you want to follow along). That detail will be important when we
-talk about linking.
-
-The musl target triple is `x86_64-unknown-linux-musl` (there is also
-`i686-uknown-linux-musl` but it is not yet available on the stable
-channel). To compile for musl call `cargo` with the argument
-`--target=x86_64-unknown-linux-musl`. If we just go ahead and try that
-we'll get an error:
-
-```
-$ cargo build --target=x86_64-unknown-linux-musl
-   Compiling hello v0.1.0 (file:///C:/Users/brian/Documents/dev/hello)
-error: can't find crate for `std` [E0463]
-error: aborting due to previous error
-error: Could not compile `hello`.
-...
-
-```
-
-TODO: omg 'aborting due to previous error', inconsistent capitalization
-
-The error tells us that the compiler can't find `std`. That is because
-we haven't installed it.
-
-```
-$ rustup target add x86_64-unknown-linux-gnu
-TODO
-```
-
-The new libraries are downloaded and added to our existing toolchain,
-which we can inspect with `rustup show`:
-
-```
-$ rustup show
-stable-x86_64-unknown-linux-gnu (default toolchain)
-TODO: Display more useful info.
-```
-
-So I'm running the stable toolchain for 64-bit Linux on x86, as indicated
-by the `x86_64-unknown-linux-gnu` target triple. The exact version
-of Rust is TODO. *And I am reportedly in possession of target support
-for `x86_64-unknown-linux-musl`!*
-
-Neat. Now we're surely ready to build a slick statically-linked binary
-we can send out into the cloud to blossom. Let's try:
-
-```
-$ cargo build --target=x86_64-unknown-linux-musl
-TODO
-```
-
-Linker failure. This is a horrible error. It happens because
-`rustc` is trying to run `musl-gcc`, and I don't have that installed:
-
-```
-$ which musl-gcc
-```
-
-Yes, that's right, `musl-`*gcc*. TODO what? gcc explain.
-
-So on Ubuntu TODO to get `musl-gcc` I do this crap:
-
-```
-$ whatever
-```
-
-Now can we create a Rust binary? IDK gah!
-
-```
-$ cargo build --target=x86_64-unknown-linux-musl
-TODO
-```
-
-Woohoo! And of course since we've created a Linux binary,
-we can just run it:
-
-```
-$ target/x86_64-unknnown-linux-musl/hello
-TODO
-```
-
-Does it have any dynamic dependencies?
-
-```
-$ TODO ldd
-TODO
-```
-
-Nope. You can run this binary on nearly anything
-that supports the Linux kernel interface.
-
-Like Windows:
-
-TODO: gif of Rust running on ubuntu on windows. No way you can get this
-in time.
-
-TODO: Commands summary
-TODO: Commands in fedora
-
-## Example: Running Rust on Android from Windows
-
-## Example: Zephyr hello world (nightly)
-
-## Rust everywhere else
-
-future work
-
-learn more
-
-Today Rust runs on ..... Tomorrow it will run everywhere, even in spaceships.
-
-Tomorrow it will run on the web [via web web assembly and asm.js].
-
-tommorow: wasm, interpreters
-
-contributing
-
-thanks
-
-
-# notes
-
-updating
-cross-compiling
-brag about platform support
-future ndk support
-emscripten
-embedded screen-captures
-source
-
-see what we can use from japaric
-https://github.com/emk/rust-musl-builder
-https://www.reddit.com/r/rust/comments/4f6bs9/rustmuslbuilder_a_docker_image_for_building/
