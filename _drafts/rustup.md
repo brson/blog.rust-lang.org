@@ -83,10 +83,6 @@ intended for use by graphical installers, particularly on Windows,
 where it's not expected to need to use the command line, even for
 development.
 
-Just watch this thing:
-
-TODO: screencast
-
 ### Superpower #1
 
 So let's talk about the first superpower and why it's so super-duper:
@@ -114,6 +110,7 @@ same crate on the 1.9 beta.
 	data-speed="2"
 ></script>
 
+<!--
 ```
 $ cargo new hello && cd hello
 $ rustc --version
@@ -122,12 +119,12 @@ $ rustup install beta
 $ rustup run beta rustc --version
 $ rustup run beta cargo test
 ```
+-->
 
 TODO: Add `rustup install`
 
-An easy way to verify your code works on the next Rust release. That's
-good Rust citizenship! If your stuff breaks on beta please report it
-to the the local authorities.
+That's an easy way to verify your code works on the next Rust
+release. That's good Rust citizenship!
 
 So that is already not so easy to replicate using other installers:
 with one `rustup install` command we added the current Rust beta to
@@ -144,8 +141,34 @@ install the nightly build too:
 
 ```
 $ rustup install nightly
+info: syncing channel updates for 'nightly-x86_64-unknown-linux-gnu'
+info: downloading component 'rustc'
+info: downloading component 'rust-std'
+info: downloading component 'rust-docs'
+info: downloading component 'cargo'
+info: installing component 'rustc'
+info: installing component 'rust-std'
+info: installing component 'rust-docs'
+info: installing component 'cargo'
+
+  nightly-x86_64-unknown-linux-gnu installed - rustc 1.10.0-nightly (8da2bcac5 2016-04-28)
+
 $ rustup show
+installed toolchains:
+
+stable-x86_64-unknown-linux-gnu (default)
+beta-x86_64-unknown-linux-gnu
+nightly-x86_64-unknown-linux-gnu
+
+active toolchain:
+
+stable-x86_64-unknown-linux-gnu (default)
+
+rustc 1.9.0-beta.1 (37a2869af 2016-04-12)
+cargo 0.9.0-nightly (8fc3fd8 2016-02-29)
 ```
+
+TODO: Implement 'show'
 
 So in addition to stable, we've also got the beta and nightly
 toolchains at our disposal. These three toolchains correspond to the
@@ -154,34 +177,27 @@ hours we should expect the Rust developers to publish a new nightly
 that we'll want to get ahold of. If we wait 6 weeks there will be a
 new stable release. We can update all of them with `rustup update`:
 
-```
-TODO screencast
-```
+<script type="text/javascript"
+	src="https://asciinema.org/a/6tajyqzhhh90wuelptqdsdhn5.js"
+	id="asciicast-6tajyqzhhh90wuelptqdsdhn5"
+	async
+	data-speed="2"
+></script>
 
-rustup can also change the default toolchain:
+rustup can also change the default toolchain with `rustup default`:
 
 ```
-$ rustup default 1.8.0
-$ rustc --version
 $ rustup default 1.7.0
-$ rustc --version
-$ rustup default 1.6.0
-$ rustc --version
-$ rustup default 1.5.0
-$ rustc --version
-$ rustup default 1.4.0
-$ rustc --version
-$ rustup default 1.3.0
-$ rustc --version
-$ rustup default 1.2.0
-$ rustc --version
-$ rustup default 1.1.0
-$ rustc --version
-$ rustup default 1.0.0
-$ rustc --version
-```
+info: syncing channel updates for '1.7.0-x86_64-unknown-linux-gnu'
+info: downloading component 'rust'
+info: installing component 'rust'
+info: default toolchain set to '1.7.0-x86_64-unknown-linux-gnu'
 
-TODO: screencast
+  1.7.0-x86_64-unknown-linux-gnu installed - rustc 1.7.0 (a5d1e7a59 2016-02-29)
+
+$ rustc --version
+rustc 1.7.0 (a5d1e7a59 2016-02-29)
+```
 
 Woah, dude! That's totally gnarly-rad! We can make `rustc` be any
 `rustc` we want it to be. It'll even be old grandpa `rustc` 1.0 if we
