@@ -45,7 +45,7 @@ Rust can do some cool, cool things. It kinda just fits everywhere.
 
 * Rust runs on the [seL4 microkernel].
 * Rust runs on embedded Linux systems [like the Raspberry Pi 3], and the [Tessel].
-* Rust is easy to deploy to the cloud with [statically linked Linux binaries][musl],
+* Rust can create [statically linked Linux binaries][musl] for easy deployment.
 * Rust powers web servers, like [iron] and [nickel]. [crates.io] is written in Rust.
 * Rust runs on [bare metal ARM] with tools like [xargo] and [zinc].
 * Rust runs on [MIPS routers running OpenWRT][OpenWRT].
@@ -142,8 +142,6 @@ $ rustup run beta cargo test
 ```
 -->
 
-TODO: Add `rustup install` to rustup
-
 That's an easy way to verify your code works on the next Rust
 release. That's good Rust citizenship!
 
@@ -193,8 +191,6 @@ stable-x86_64-unknown-linux-gnu (default)
 
 rustc 1.8.0 (db2939409 2016-04-11)
 ```
-
-TODO: Implement 'show'
 
 `rustup show` indicates that, in addition to stable, we've also got
 the beta and nightly toolchains at our disposal. These three
@@ -251,7 +247,18 @@ stable toolchain that targets the 64-bit, MSVC ABI.
 
 ```
 $ rustup default stable-x86_64-pc-windows-msvc
-TODO
+info: syncing channel updates for 'stable-x86_64-pc-windows-msvc'
+info: downloading component 'rustc'
+info: downloading component 'rust-std'
+info: downloading component 'rust-docs'
+info: downloading component 'cargo'
+info: installing component 'rustc'
+info: installing component 'rust-std'
+info: installing component 'rust-docs'
+info: installing component 'cargo'
+
+  stable-x86_64-pc-windows-msvc installed - rustc 1.8.0-stable (db2939409 2016-04-11)
+
 ```
 
 Here the "stable" toolchain name is appended with an extra identifier
@@ -487,13 +494,230 @@ ldd target/x86_64-unknown-linux-musl/debug/hello
 So, uh. That's it! take that `hello` binary and copy it to any
 x86_64 machine running Linux and it'll just work.
 
-Knock on wood. 🚀
+Knock on wood(en rocketships). 🚀
+
+
+
+
+
+
+
 
 ## Example: Running Rust on Android from Windows
 
-## Example: Zephyr hello world (nightly)
+One more example. This time building for Android, from Windows,
+that is, `arm-linux-androideabi` from `i686-pc-windows-gnu`.
+I'm going to do this in the Windows console, cmd.exe, just to prove
+it works, but I don't seriously recommend using it for "real work".
+Instead I'd suggest either PowerShell or the [MSYS2] shell.
+
+[MSYS2]: https://msys2.github.io/
+
+I'll warn you ahead of time this is going to be *ugly*. I may
+be the first person to build Rust code for Android on Windows. So
+we're blazing new trails today.
+
+To build for Android we need to install the Android target. For
+this example we also need to be on nightly, so let's set up another
+'hello, world' project and use the nightly compiler with Android support:
+
+```
+$ cargo new --bin hello && cd hello
+$ rustup override add nightly
+info: syncing channel updates for 'nightly-i686-pc-windows-gnu'
+info: downloading component 'rustc'
+info: downloading component 'rust-std'
+info: downloading component 'rust-docs'
+info: downloading component 'cargo'
+info: downloading component 'rust-mingw'
+info: installing component 'rustc'
+info: installing component 'rust-std'
+info: installing component 'rust-docs'
+
+info: installing component 'cargo'
+info: installing component 'rust-mingw'
+info: override toolchain for 'C:\Users\brian\hello' set to 'nightly-i686-pc-windows-gnu'
+
+  nightly-i686-pc-windows-gnu installed - rustc 1.10.0-nightly (8da2bcac5 2016-04-28)
+
+$ rustup target add arm-linux-androideabi
+info: downloading component 'rust-std' for 'arm-linux-androideabi'
+info: installing component 'rust-std' for 'arm-linux-androideabi'
+$ rustup show
+installed targets for stable-i686-pc-windows-gnu
+-----------------------------------------------------
+
+arm-linux-androideabi
+i686-pc-windows-gnu
+
+active toolchain
+----------------
+
+stable-i686-pc-windows-gnu (default)
+
+rustc 1.8.0 (db2939409 2016-04-11)
+```
+
+Note that this time we did something new: we used `rustup override add
+nightly` to configure *just this project* to use the nightly toolchain
+instead of stable. Overrides in rustup configure specific directories
+to use specific toolchains.
+
+So let's see what happens if we try to just build our 'hello'
+project without installing anything further:
+
+```
+$ cargo build --target=arm-linux-androideabi
+   Compiling hello v0.1.0 (file:///C:/Users/brian/hello)
+error: could not exec the linker `cc`: The system cannot find the file specified. (os error 2)
+error: Could not compile `hello`.
+```
+
+Oh, hey, it's that linker error again. We don't have a linker that
+supports Android yet, so let's take a moment's digression to talk about
+building for Android.
+
+To develop for Android we need *3* things:
+
+* [The Oracle JDK 7](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html).
+* [Android Studio](https://developer.android.com/sdk/index.html).
+* [The Android NDK](https://developer.android.com/ndk/guides/setup.html#install).
+
+Experienced Android developers will know what all these pieces
+are. Android programs are written in Java, so we need the Java
+development kit (the "JDK"). That doesn't include anything related to
+Android though. For that we need the Android SDK, which comes with
+Android Studio, and contains the Android Java libraries and the
+Android emulator that we're going to run our program on. The Android
+*NDK* is the most important component for basic Rust development: it
+contains the linker `rustc` needs to create Android binaries. Now,
+technically to just *build* Rust code that runs on Android the only
+thing we *need* is the NDK, but real serious Android development needs
+all this stuff, and I'm a real serious man.
+
+The first two are simple GUI installers. Just click the buttons and
+they'll be set up correctly. After installing Android Studio you'll
+need to launch it and go through the SDK setup process. After SDK
+installation, on my machine it was located at
+`C:\Users\brian\AppData\Local\Android\sdk`. On yours it will be
+slightly different.
+
+The third piece is the Android NDK.
+
+Oh, dear God, the NDK. Your inclination is going to be to download the
+most recent NDK from their download page, which at the time of this
+writing is '11c'. *Don't you download* **that** *NDK*. You want *[this
+NDK]*, '10e'.  Rust's standard library is presently built against NDK
+revision 10e and references symbols that *were removed from the NDK*
+in subsequent revisions. So if you use a newer NDK you'll get linker
+errors. This should be fixed in Rust Android builds soon when we
+upgrade our builders.
+
+[this NDK]: http://dl.google.com/android/repository/android-ndk-r10e-windows-x86_64.zip
+
+The NK is just a zip file that needs to be extracted. Personnaly, I
+extracted it to `C:\`, so now I have a directory `C:\android-ndk-r10e`
+containing the Android NDK.
+
+We're still not done setting up our environment for Android
+development!
+
+Normally we would use `make-standalone-toolchain.sh`, included with the NDK,
+to create a "standalone toolchain" to work with. Since we're on windows though
+we can't just run POSIX shell scripts. This will force us to be explicit
+about some things.
+
+The first thing that we need to do (and need to do regardless of
+whether we use `make-standalone-toolchain.sh` or not), is tell `rustc`
+where to find the Android linker. For this we'll create a file
+called `.cargo/config` and write in it this:
+
+```toml
+[target.arm-linux-androideabi]
+linker = "C:/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/arm-linux-androideabi-gcc.exe"
+```
+
+This is fairly self explanatory, just identifying the location of the
+correct `gcc.exe`. Your path may be slightly different depending on
+where you installed the NDK.
+
+Let's try to build yet again:
+
+```
+$ cargo build --target=arm-linux-androideabi
+   Compiling hello v0.1.0 (file:///C:/Users/brian/hello)
+error: linking with `C:/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/arm-linux-androideabi-gcc.exe` failed: exit code: 1
+note: "C:/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/arm-linux-androideabi-gcc.exe" "-Wl,--as-needed" "-Wl,-z,noexecstack" "-Wl,--allow-multiple-definition" "-L" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib" "C:\\Users\\brian\\hello\\target\\arm-linux-androideabi\\debug\\hello.0.o" "-o" "C:\\Users\\brian\\hello\\target\\arm-linux-androideabi\\debug\\hello" "-Wl,--gc-sections" "-pie" "-nodefaultlibs" "-L" "C:\\Users\\brian\\hello\\target\\arm-linux-androideabi\\debug" "-L" "C:\\Users\\brian\\hello\\target\\arm-linux-androideabi\\debug\\deps" "-L" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib" "-Wl,-Bstatic" "-Wl,-Bdynamic" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib\\libstd-4fda350b.rlib" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib\\libcollections-4fda350b.rlib" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib\\librustc_unicode-4fda350b.rlib" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib\\librand-4fda350b.rlib" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib\\liballoc-4fda350b.rlib" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib\\liballoc_jemalloc-4fda350b.rlib" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib\\liblibc-4fda350b.rlib" "C:\\Users\\brian\\.multirust\\toolchains\\stable-i686-pc-windows-gnu\\lib\\rustlib\\arm-linux-androideabi\\lib\\libcore-4fda350b.rlib" "-l" "dl" "-l" "log" "-l" "gcc" "-l" "gcc" "-l" "c" "-l" "m" "-l" "compiler-rt"
+note: c:/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld.exe: error: cannot open crtbegin_dynamic.o: No such file or directory
+c:/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld.exe: error: cannot open crtend_android.o: No such file or directory
+c:/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld.exe: error: cannot find -ldl
+c:/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld.exe: error: cannot find -llog
+c:/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld.exe: error: cannot find -lc
+c:/android-ndk-r10e/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64/bin/../lib/gcc/arm-linux-androideabi/4.9/../../../../arm-linux-androideabi/bin/ld.exe: error: cannot find -lm
+C:\Users\brian\.multirust\toolchains\stable-i686-pc-windows-gnu\lib\rustlib\arm-linux-androideabi\lib\liballoc_jemalloc-4fda350b.rlib(jemalloc.pic.o):jemalloc.c:function malloc_conf_init: error: undefined reference to '__errno'
+C:\Users\brian\.multirust\toolchains\stable-i686-pc-windows-gnu\lib\rustlib\arm-linux-androideabi\lib\liballoc_jemalloc-4fda350b.rlib(jemalloc.pic.o):jemalloc.c:function malloc_conf_init: error: undefined reference to 'readlink'
+C:\Users\brian\.multirust\toolchains\stable-i686-pc-windows-gnu\lib\rustlib\arm-linux-androideabi\lib\liballoc_jemalloc-4fda350b.rlib(jemalloc.pic.o):jemalloc.c:function malloc_conf_init: error: undefined reference to '__errno'
+C:\Users\brian\.multirust\toolchains\stable-i686-pc-windows-gnu\lib\rustlib\arm-linux-androideabi\lib\liballoc_jemalloc-4fda350b.rlib(jemalloc.pic.o):jemalloc.c:function malloc_conf_init: error: undefined reference to 'getenv'
+C:\Users\brian\.multirust\toolchains\stable-i686-pc-windows-gnu\lib\rustlib\arm-linux-androideabi\lib\liballoc_jemalloc-4fda350b.rlib(jemalloc.pic.o):jemalloc.c:function malloc_conf_init: error: undefined reference to 'strncmp'
+C:\Users\brian\.multirust\toolchains\stable-i686-pc-windows-gnu\lib\rustlib\arm-linux-androideabi\lib\liballoc_jemalloc-4fda350b.rlib(jemalloc.pic.o):jemalloc.c:function malloc_conf_init: error: undefined reference to 'strncmp'
+C:\Users\brian\.multirust\toolchains\stable-i686-pc-windows-gnu\lib\rustlib\arm-linux-androideabi\lib\liballoc_jemalloc-4fda350b.rlib(jemalloc.pic.o):jemalloc.c:function malloc_conf_init: error: undefined reference to 'strncmp'
+... snip many lines of badness ...
+```
+
+Linker errors, and more linker errors. Those lines about "cannot find
+-lc", etc. are indicative of a very specific problem. `-lc` is the
+flag to link the C standard library, so this error is telling us that
+the linker basically can't find *anything*. This is where we have to
+work around our lack of a "standalone toolchain" - if we had run
+`make-standalone-toolchain.sh` earlier this would (probably) just
+work. Instead we have to tell the linker where to find the "sysroot",
+which is more-or-less just "the place everything is installed". Both
+gcc and rustc have a concept of a sysroot, which in Unix installations
+is traditionally either `/usr` or `/usr/local`. In this case, though
+the sysroot of my Android gcc toolchain is
+`c:/android-ndk-r10e/platforms/android-18/arch-arm`.
+
+Notice that sub-path, 'android-18'. The '18' is the Android [API
+level](http://developer.android.com/guide/topics/manifest/uses-sdk-element.html#ApiLevels).
+Today, Rust's `arm-linux-androideabi` target is built against Android
+API level 18, and should theoretically be forwards-compatible with
+subsequent Android releases. So we're using level 18.
+
+The way to set the sysroot is by passing gcc the `--sysroot` flag. The
+only way to get arbitrary flags to `rustc`s linker (which here is
+`gcc`) is to use the `-C link-args` argument, which is not considered
+stable, and not exposed through Cargo.
+
+There is one way to pass this flag, and it's the reason we needed the
+Rust nightly toolchain: the `RUSTFLAGS` environment variable. This
+environment variable lets arbitrary flags be passed to the compiler.
+It's typically used for hacks and debugging and is not intended to be
+a required part of your build process. Here we're going to hack
+
+```
+$ export RUSTFLAGS="-C link-args=--sysroot=c:/android-ndk-r10e/platforms/android-18/arch-arm"
+$ cargo build --target=arm-linux-androideabi
+   Compiling hello v0.1.0 (file:///C:/Users/brian/hello)
+```
+
+And, uh. That built. Success! Success! Hey, it worked! Of course just
+getting something to build is not the end of the story. You've also
+got to package your code up as an Android APK. For that you can use
+[cargo-apk]. I'm not going to show you that now because this post is
+already exceedingly long.
+
+[cargo-apk]: https://users.rust-lang.org/t/announcing-cargo-apk/5501
+
+TODO: I really wanted to go all the way through to cargo-apk.
 
 ## Rust everywhere else
+
+
+
+
+
+
+
 
 future work
 
