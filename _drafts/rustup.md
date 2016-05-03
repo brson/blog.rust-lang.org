@@ -45,7 +45,7 @@ Rust can do some cool, cool things. It kinda just fits everywhere.
 
 * Rust runs on the [seL4 microkernel].
 * Rust runs on embedded Linux systems [like the Raspberry Pi 3], and the [Tessel].
-* Rust is easy to deploy to the cloud with [statically linked Linux binaries][musl],
+* Rust can create [statically linked Linux binaries][musl] for easy deployment.
 * Rust powers web servers, like [iron] and [nickel]. [crates.io] is written in Rust.
 * Rust runs on [bare metal ARM] with tools like [xargo] and [zinc].
 * Rust runs on [MIPS routers running OpenWRT][OpenWRT].
@@ -142,8 +142,6 @@ $ rustup run beta cargo test
 ```
 -->
 
-TODO: Add `rustup install` to rustup
-
 That's an easy way to verify your code works on the next Rust
 release. That's good Rust citizenship!
 
@@ -193,8 +191,6 @@ stable-x86_64-unknown-linux-gnu (default)
 
 rustc 1.8.0 (db2939409 2016-04-11)
 ```
-
-TODO: Implement 'show'
 
 `rustup show` indicates that, in addition to stable, we've also got
 the beta and nightly toolchains at our disposal. These three
@@ -251,7 +247,18 @@ stable toolchain that targets the 64-bit, MSVC ABI.
 
 ```
 $ rustup default stable-x86_64-pc-windows-msvc
-TODO
+info: syncing channel updates for 'stable-x86_64-pc-windows-msvc'
+info: downloading component 'rustc'
+info: downloading component 'rust-std'
+info: downloading component 'rust-docs'
+info: downloading component 'cargo'
+info: installing component 'rustc'
+info: installing component 'rust-std'
+info: installing component 'rust-docs'
+info: installing component 'cargo'
+
+  stable-x86_64-pc-windows-msvc installed - rustc 1.8.0-stable (db2939409 2016-04-11)
+
 ```
 
 Here the "stable" toolchain name is appended with an extra identifier
@@ -370,7 +377,7 @@ on dynamic libraries, Rust needs to statically link to libc.
 
 Typical Linux desktop systems build their software on [glibc], the GNU
 C standard library, but it is common to find Linux systems that use
-others: Android runs [BIONIC], and [Alpine Linux] runs [musl][] [††]. The
+others: Android runs [BIONIC], and [Alpine Linux] runs [musl][]. The
 systems we do our development on though are almost universally based
 on glibc, and *one of glibc's support libraries, libgcc, cannot be
 linked statically*, [due to TODO some issues involving stack
@@ -385,7 +392,6 @@ need to use a different C library.
 [BIONIC]: https://github.com/android/platform_bionic
 [musl]: http://www.musl-libc.org/
 [Alpine Linux]: http://alpinelinux.org/
-[††]: #appendix-disclaimers
 [gross]: https://github.com/rust-lang/rust-buildbot/tree/master/slaves/dist
 
 In Today's Rust we do that by linking to [musl] instead. musl is
@@ -487,123 +493,325 @@ ldd target/x86_64-unknown-linux-musl/debug/hello
 So, uh. That's it! take that `hello` binary and copy it to any
 x86_64 machine running Linux and it'll just work.
 
-Knock on wood. 🚀
+Knock on wood(en rocketships). 🚀
 
-## Example: Running Rust on Android from Windows
+For more advanced use of musl consider [rust-musl-builder], a Docker
+image set up for musl development, which helpfully includes common C
+libraries precompiled for musl.
 
-## Example: Zephyr hello world (nightly)
+## Example: Running Rust on Android
+
+One more example. This time building for Android, from Linux,
+that is, `arm-linux-androideabi` from `x86_64-unknown-linux-gnu`.
+This can also be done from OS X or Windows, though on Windows
+the process was less smooth [when I tried].
+
+[when I tried]: https://gist.github.com/brson/a2b97ba8b3fbb7939143f584b6366751
+
+To build for Android we need to install the Android target. For this
+example we also need to be on nightly (older Rust builds are incompatible
+with the latest Android NDK), so let's set up another 'hello,
+world' project and use the nightly compiler with Android support:
+
+```
+$ cargo new --bin hello && cd hello
+$ rustup override add nightly
+info: syncing channel updates for 'nightly-i686-pc-windows-gnu'
+info: downloading component 'rustc'
+info: downloading component 'rust-std'
+info: downloading component 'rust-docs'
+info: downloading component 'cargo'
+info: downloading component 'rust-mingw'
+info: installing component 'rustc'
+info: installing component 'rust-std'
+info: installing component 'rust-docs'
+
+info: installing component 'cargo'
+info: installing component 'rust-mingw'
+info: override toolchain for '/home/brian/hello' set to 'nightly-i686-pc-windows-gnu'
+
+  nightly-i686-pc-windows-gnu installed - rustc 1.10.0-nightly (8da2bcac5 2016-04-28)
+
+$ rustup target add arm-linux-androideabi
+info: downloading component 'rust-std' for 'arm-linux-androideabi'
+info: installing component 'rust-std' for 'arm-linux-androideabi'
+$ rustup show
+installed toolchains
+--------------------
+
+stable-x86_64-unknown-linux-gnu (default)
+nightly-x86_64-unknown-linux-gnu
+
+installed targets for nightly-x86_64-unknown-linux-gnu
+-----------------------------------------------------
+
+arm-linux-androideabi
+i686-pc-windows-gnu
+
+active toolchain
+----------------
+
+nightly-x86_64-unknown-linux-gnu (override)
+
+rustc 1.10.0-nightly (8da2bcac5 2016-04-28)
+```
+
+Note that this time we did something new: we used `rustup override add
+nightly` to configure *just this project* to use the nightly toolchain
+instead of stable. Overrides in rustup configure specific projects
+to build with specific toolchains.
+
+So let's see what happens if we try to just build our 'hello'
+project without installing anything further:
+
+```
+$ cargo build --target=arm-linux-androideabi
+   Compiling hello v0.1.0 (file:///home/brson/hello)
+   error: linking with `cc` failed: exit code: 1
+   note: "cc" "-Wl,--as-needed" "-Wl,-z,noexecstack" "-Wl,--allow-multiple-definition" "-L" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib" "/home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o" "-o" "/home/brson/hello/target/arm-linux-androideabi/debug/hello" "-Wl,--gc-sections" "-pie" "-nodefaultlibs" "-L" "/home/brson/hello/target/arm-linux-androideabi/debug" "-L" "/home/brson/hello/target/arm-linux-androideabi/debug/deps" "-L" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib" "-Wl,-Bstatic" "-Wl,-Bdynamic" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib/libstd-cb705824.rlib" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib/libcollections-cb705824.rlib" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib/librustc_unicode-cb705824.rlib" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib/librand-cb705824.rlib" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib/liballoc-cb705824.rlib" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib/liballoc_jemalloc-cb705824.rlib" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib/liblibc-cb705824.rlib" "/root/.multirust/toolchains/nightly-x86_64-unknown-linux-gnu/lib/rustlib/arm-linux-androideabi/lib/libcore-cb705824.rlib" "-l" "dl" "-l" "log" "-l" "gcc" "-l" "gcc" "-l" "c" "-l" "m" "-l" "compiler-rt"
+   note: /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /usr/bin/ld: /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: Relocations in generic ELF (EM: 40)
+   /home/brson/hello/target/arm-linux-androideabi/debug/hello.0.o: error adding symbols: File in wrong format
+   collect2: error: ld returned 1 exit status
+
+error: aborting due to previous error
+error: Could not compile `hello`.
+```
+
+That! Is a bad error. TODO explain.
+
+We don't have a linker that supports Android yet, so let's take a
+moment's digression to talk about building for Android.
+
+To develop for Android we need 2 things:
+
+* [The Android SDK](https://developer.android.com/sdk/index.html).
+* [The Android NDK](https://developer.android.com/ndk/guides/setup.html#install).
+
+Experienced Android developers will know what all these pieces
+are. The SDK contains the Android Java libraries and the Android
+emulator that we're going to run our program on. The Android *NDK* is
+the most important component for basic Rust development: it contains
+the linker `rustc` needs to create Android binaries. Now, technically
+to just *build* Rust code that runs on Android the only thing we
+*need* is the NDK, but for practical development we'll want the SDK
+too.
+
+On Linux, download and unpack them with these commands:
+
+```
+$ curl -O https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
+$ android-sdk_r24.4.1-linux.tgz
+$ curl -O http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip
+$ unzip android-ndk-r11c-linux-x86_64.zip
+```
+
+Make the standalane toolchain: TODO explain
+
+```
+$ android-ndk-r11c/build/tools/make-standalone-toolchain.sh \
+      --platform=android-18 --toolchain=arm-linux-androideabi-clang \
+      --install-dir=android-18-toolchain --ndk-dir=android-ndk-r11c/ --arch=arm
+HOST_OS=linux
+HOST_EXE=
+HOST_ARCH=x86_64
+HOST_TAG=linux-x86_64
+HOST_NUM_CPUS=4
+BUILD_NUM_CPUS=8
+Copying prebuilt binaries...
+Copying sysroot headers and libraries...
+Copying c++ runtime headers and libraries...
+Copying files to: /home/brian/android-18-toolchain
+Cleaning up...
+Done.
+```
+
+Notice that "--platform=android-18". The "18" is the Android [API
+level](http://developer.android.com/guide/topics/manifest/uses-sdk-element.html#ApiLevels).
+Today, Rust's `arm-linux-androideabi` target is built against Android
+API level 18, and should theoretically be forwards-compatible with
+subsequent Android releases.
+
+The final thing for us to do is tell Cargo where to find the android linker,
+which is in the standalone NDK toolchain we just created. To do that
+we put the following in `.cargo/config`:
+
+```toml
+[target.arm-linux-androideabi]
+linker = "/root/android-18-toolchain"
+```
+
+TODO
+
+```
+$ cargo build --target=arm-linux-androideabi
+   Compiling hello v0.1.0 (file:///root/hello)
+```
+
+
+And, uh. That built. Success! Success! Hey, it worked! Of course just
+getting something to build is not the end of the story. You've also
+got to package your code up as an Android APK. For that you can use
+[cargo-apk]. I'm not going to show you that now because this post is
+already exceedingly long.
+
+[cargo-apk]: https://users.rust-lang.org/t/announcing-cargo-apk/5501
+
+TODO: I really wanted to go all the way through to cargo-apk.
+
+```
+$ export NDK_HOME=/root/android-ndk-r10e
+$ export ANDROID_HOME=/root/android-sdk-linux
+$ apt install openjdk-8jdk ant
+```
+
+Note that `NDK_HOME` is pointing to the NDK itself, not the
+"standalone toolchain" we created earlier. `cargo apk` uses
+the NDK directly
+
+```
+$ /root/android-sdk-linux/tools/android update sdk -a --no-ui \
+      --filter android-18,sys-image-armeabi-v7a-android-18
+```
+
+Need to click through some licenses.
+
+```
+$ /root/android-sdk-linux/tools/android create avd \
+      --name arm-18 --target android-18 --abi armeabi-v7a
+```
+
+When asked whether to "create a custom hardware profile", say "no".
+
+TODO
+
 
 ## Rust everywhere else
 
-future work
+Rust is a software platform with the potential to run on anything with
+a CPU. Today I showed you a little bit of what Rust can already do,
+with the rustup tool. Today Rust runs on most of the platforms you use
+daily. Tomorrow it will run everywhere.
 
-learn more
+So what should you expect next?
 
-Today Rust runs on ..... Tomorrow it will run everywhere, even in spaceships.
+In the coming months we're going to continue removing barriers to Rust
+cross-compilation. Today rustup provides access to the standard
+library, but as we've seen in this post, there's more to
+cross-compilation than rustc + std. It's acquiring and configuring the
+linker and C toolchain that is the most vexing - each combination of
+host and target platform requires something slightly different. We
+want to make this easier, and will be adding "NDK support" to
+rustup. What this means will again depend on the exact scenario, but
+we're going to start working from the most demanded uses cases, like
+Android, and try to automate as much of the detection, installation
+and configuration of the non-Rust toolchain components as we can. On
+Android for instance, the hope is to automate everything for a basic
+initial setup except for accepting the licenses.
 
-Tomorrow it will run on the web [via web web assembly and asm.js].
+In addition to that there are multiple efforts to improve Rust
+cross-compilation tooling, including the aforementioned [xargo], which
+can be used to build the standard library for targets unsupported by
+rustup or custom targets; and [cargo-apk], which builds Android
+packages from Cargo packages.
 
-tommorow: wasm, interpreters
+[cargo-apk]: https://users.rust-lang.org/t/announcing-cargo-apk/5501
+[xargo]: https://github.com/japaric/xargo
 
-contributing
+Finally, the most exciting platform on the horizon for Rust is not a
+traditional target for systems languages: the web. With [emscripten]
+today it's quite easy to run *C++* code on the web by converting LLVM
+IR to JavaScript (or the asm.js subset of JavaScript). And the
+upcoming [WebAssembly][] (wasm) standard will cement the web platform as a
+first-class target for programming languages.
 
-thanks
+[WebAssembly]: https://en.wikipedia.org/wiki/WebAssembly
 
+*Rust is uniquely-positioned to be the most powerful and usable
+wasm-targetting language for the immediate future.* The same
+properties that make Rust so portable to real hardware makes it nearly
+trivial to port Rust to wasm. The same can't be said for languages
+with complex runtimes that include garbage collectors.
 
+Rust has [already been ported to emscripten][em] (at least twice),
+but the code has not yet fully landed. This summer it's happening
+though: Rust + Emscripten. Rust on the Web. Rust everywhere.
 
+[em]: https://internals.rust-lang.org/t/need-help-with-emscripten-port/3154
 
+## rustup - fuck yeah
 
-## (†) Appendix: rustup supported platforms
+While many people are reporting success with rustup, it
+remains in beta, with some [key outstanding bugs], and is not yet the
+officially recommended installation method for Rust (though you should
+try it). We're going to keep soliciting feedback, applying polish, and
+fixing bugs. Then we're going to improve the rustup installation
+experience on Windows by [embedding it into a GUI that behaves like a
+proper Windows installer][gui].
 
-Today, rustup blah blah...
+At that point we'll likely update the download instructions on
+www.rust-lang.org to recommend rustup. I expect all the existing
+installation methods to remain available, including the non-rustup
+Windows installers, but at that point our focus will be on improving
+the installation experience through rustup. It's also plausible
+that rustup itself will be packaged for package managers like
+Homebrew and dpkg.
 
-rustup itself runs on:
+If you want to try rustup for yourself, visit [www.rustup.rs] and
+follow the instructions. Then leave feedback on the [dedicated forum
+thread][irlo], or [file bugs] on the issue tracker.
 
-rustup can install compilers for:
+[irlo]: https://internals.rust-lang.org/t/beta-testing-rustup-rs/3316/112
+[gui]: https://github.com/rust-lang-nursery/rustup.rs/issues/253
+[key outstanding bugs]: https://github.com/rust-lang-nursery/rustup.rs/issues?q=is%3Aopen+is%3Aissue+label%3A%22initial+release%22
+[file bugs]: https://github.com/rust-lang-nursery/rustup.rs/issues
+[www.rustup.rs]: https://www.rustup.rs
+[emscripten]: https://kripken.github.io/emscripten-site/
 
-rustup can install std for:
+## Thanks
 
-## (††) Appendix: disclaimers
+Rust would not be half as capable a system as it is without the help
+of many individuals. Thanks to Diggory Blake for writing rustup,
+to Jorge Aparicio for fixing lots of cross-compilation bugs and
+documenting the process, Tomaka for pioneering Rust on Android,
+and Alex Crichton for creating the release infrastructure for Rust's
+many platforms. And thanks to all the rustup contributors:
 
-Sorry Rust doesn't work on Alpine Linux yet!
+* Alex Crichton
+* Brian Anderson
+* Corey Farwell
+* David Salter
+* Diggory Blake
+* Jacob Shaffer
+* Jeremiah Peschka
+* Joe Wilm
+* Jorge Aparicio
+* Kai Noda
+* Kamal Marhubi
+* Kevin K
+* llogiq
+* Mika Attila
+* NODA, Kai
+* Paul Padier
+* Severen Redwood
+* Tim Neumann
+* trolleyman
+* Vadim Petrochenkov
+* V Jackson
+* Vladimir
+* Wayne Warren
+* Y. T. Chung
 
-
-## notes
-
-updating
-cross-compiling
-brag about platform support
-future ndk support
-emscripten
-embedded screen-captures
-source
-
-see what we can use from japaric
-https://github.com/emk/rust-musl-builder
-https://www.reddit.com/r/rust/comments/4f6bs9/rustmuslbuilder_a_docker_image_for_building/
-
-
-
-
-
-
-### Rustup notes
-
-* Keeps Windows installation at feature parity with Unix
-* Switch between versions of Rust easily
-* Access to the beta and nightly release channels
-* Access to the nightly archives
-* Install binary standard libraries
-* Keeps release channels updated
-* Set toolchain per directory
-* It centralizes Rust tools in ~/.cargo/bin
-* Written in Rust for portability and maintainability
-* Written as a library for use in GUI installers and IDEs
-
-Some history.
-
-On Unix
-have been distributing Rust with a custom installer written in shell
-script, but on Windows with `.msi` packages built with TODO, tools
-that deal with installation blah blah.
-
-
-and in particular to
-bring toolchain multiplexing in the style of [rbenv] and [multirust]
-to Windows. 
-
-
-TODO: Talk about history and Diggsey.
-
-Introduce basics, why a new
-installer, what problems does it solve.
-
-```
-$ rustup install
-```
-
-TODO: just make install work
-
-* Talk about cross-compilation and linking.
-* Talk about host and target, target triples.
-
-If you are already convinced and just want to get on with it,
-visit [www.rustup.rs] to install `rustup`.
-
-This is kinda just the start of what we're going to be able to do
-now. Over time it should result in a smooth experience for all
-Rust users. TODO: about Windows GUI
-
-
-Reletaionship between rust / cargo.
-
-
-
-## Qs
-
-Need evidence for libgcc being unstatically-linkable.
-Should I implement `rustup install`?
-Should I implement shown `rustup show` features?
-
-TODO: omg 'aborting due to previous error', inconsistent capitalization in errors
 
