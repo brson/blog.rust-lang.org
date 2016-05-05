@@ -653,23 +653,21 @@ we put the following in `.cargo/config`:
 linker = "/root/android-18-toolchain"
 ```
 
-TODO
+And run our build:
 
 ```
 $ cargo build --target=arm-linux-androideabi
    Compiling hello v0.1.0 (file:///root/hello)
 ```
 
-
-And, uh. That built. Success! Success! Hey, it worked! Of course just
-getting something to build is not the end of the story. You've also
-got to package your code up as an Android APK. For that you can use
-[cargo-apk]. I'm not going to show you that now because this post is
-already exceedingly long.
+Success! Of course just getting something to build is not the end of
+the story. You've also got to package your code up as an Android
+APK. For that you can use [cargo-apk]. I'm not going to show you that
+now because this post is already exceedingly long.
 
 [cargo-apk]: https://users.rust-lang.org/t/announcing-cargo-apk/5501
 
-TODO: I really wanted to go all the way through to cargo-apk.
+<!--
 
 ```
 $ export NDK_HOME=/root/android-ndk-r10e
@@ -696,6 +694,7 @@ $ /root/android-sdk-linux/tools/android create avd \
 When asked whether to "create a custom hardware profile", say "no".
 
 TODO
+-->
 
 
 ## Rust everywhere else
