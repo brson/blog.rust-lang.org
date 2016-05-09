@@ -1,4 +1,4 @@
----
+--
 layout: post
 title: "Taking Rust everywhere with rustup"
 author: Brian Anderson
@@ -24,7 +24,7 @@ description: "The rustup toolchain manager makes cross-compilation in Rust a bre
 In other words, **you want to develop/build on one "host" platform, but get a
 final binary that runs on a different "target" platform**.
 
-Thanks to the [LLVM] backend, it's always been possible to *in principle* to
+Thanks to the [LLVM] backend, it's always been possible *in principle* to
 cross-compile Rust code: just tell the backend to use a different target! And
 indeed, early adopters have shipped Rust code to embedded Linux systems
 [like the Raspberry Pi 3], [bare metal ARM],
@@ -36,7 +36,7 @@ indeed, early adopters have shipped Rust code to embedded Linux systems
 [OpenWRT]: https://github.com/japaric/rust-on-openwrt
 
 But in practice, there are a lot of ducks you have to get in a row to make it
-work: the appropriate Rust standard library, and a cross-compiling C toolchain
+work: the appropriate Rust standard library, a cross-compiling C toolchain
 including linker, headers and binaries for C libraries, and so on.
 As you might expect, this generally involves poring over various blog posts and
 package installers to get everything "just so". And the exact set of tools can
@@ -56,8 +56,13 @@ them to you via a new tool called **[rustup]**.
 At its heart, **rustup is a *toolchain manager* for Rust**. It can download and
 switch between copies of the Rust compiler and standard library for the full set
 of supported platforms, and track Rust's nightly, beta, and release [channels],
-as well as specific versions. I'll walk through all of this functionality, and
-the situations where it's useful, in the rest of the post.
+as well as specific versions. In this way rustup is similar to the [rvm],
+[rbenv] and [pyenv] tools for Ruby and Python. I'll walk through all of this
+functionality, and the situations where it's useful, in the rest of the post.
+
+[rvm]: https://rvm.io/
+[rbenv]: https://github.com/rbenv/rbenv
+[pyenv]: https://github.com/yyuu/pyenv
 
 Today rustup is a command line application, and I'm going to show you some
 examples of what it can do, but it's also a [Rust library], and eventually these
@@ -100,49 +105,10 @@ $ rustup run beta cargo test
 That's an easy way to verify your code works on the next Rust release. That's
 good Rust citizenship!
 
-Even this first step is not so easy to replicate using existing installers:
-**with one `rustup install` command we added the current Rust beta to our local
-Rust arsenal, and can easily use it**. If we were using the individual release
-tarballs we would need to download the beta from the website. We'd install it to
-a different location than the stable release. Then, to test against beta we
-would probably set the `RUSTC` environment variable when calling `cargo`, or
-perhaps we would adjust the `PATH` variable to find the beta toolchain instead
-of the stable toolchain.
+We can use `rustup show` to show us the installed toolchains, and `rustup
+update` to keep the up to date with Rust's [train releases].
 
-To extend the previous example, let's round out our collection of Rust compilers
-by installing nightly as well:
-
-```
-$ rustup install nightly
-info: syncing channel updates for 'nightly-x86_64-unknown-linux-gnu'
-info: downloading component 'rustc'
-info: downloading component 'rust-std'
-...
-
-  nightly-x86_64-unknown-linux-gnu installed - rustc 1.10.0-nightly (8da2bcac5 2016-04-28)
-
-$ rustup show
-installed toolchains
---------------------
-
-stable-x86_64-unknown-linux-gnu (default)
-beta-x86_64-unknown-linux-gnu
-nightly-x86_64-unknown-linux-gnu
-
-active toolchain
-----------------
-
-stable-x86_64-unknown-linux-gnu (default)
-
-rustc 1.8.0 (db2939409 2016-04-11)
-```
-
-The `rustup show` command indicates that, in addition to stable, we've also got
-the beta and nightly toolchains at our disposal. These three toolchains
-correspond to the Rust release channels and are updated periodically. If we wait
-24 hours we should expect the Rust developers to publish a new nightly that
-we'll want to get ahold of. If we wait 6 weeks there will be a new stable
-release. We can update all of them with `rustup update`:
+[train releases]: http://blog.rust-lang.org/2014/10/30/Stability.html
 
 <script type="text/javascript"
 	src="https://asciinema.org/a/6tajyqzhhh90wuelptqdsdhn5.js"
@@ -151,8 +117,9 @@ release. We can update all of them with `rustup update`:
 	data-speed="2"
 ></script>
 
-One last important feature: rustup can also change the default
-toolchain with `rustup default`:
+Finally, rustup can also change the default toolchain with `rustup default`
+(we'll see later how to override the default for a particular project):
+
 
 ```
 $ rustc --version
@@ -169,22 +136,10 @@ $ rustc --version
 rustc 1.7.0 (a5d1e7a59 2016-02-29)
 ```
 
-We can make `rustc` be any `rustc` we want it to be. It'll even be old grandpa
-`rustc` 1.0 if we tell it to with `rustup default 1.0.0`. In addition to being
-an installer, rustup is also a Rust toolchain multiplexer: with rustup
-installed, when you call `rustc` or `cargo` (or any other command distributed
-with Rust) you are calling a proxy binary, installed by rustup, that in turn
-calls the compiler from a particular Rust toolchain. In this way rustup is
-similar to the [rbenv] and [pyenv] tools for Ruby and Python.
-
-[rbenv]: https://github.com/rbenv/rbenv
-[pyenv]: https://github.com/yyuu/pyenv
-
-This layer of indirection enables some useful workflows. For example, on Windows
-[where Rust supports both the GNU and MSVC ABI][abi], you might want to switch
-from the default stable toolchain on Windows, which targets the 32-bit x86
-architecture and the GNU ABI, to the a stable toolchain that targets the 64-bit,
-MSVC ABI.
+For example, on Windows [where Rust supports both the GNU and MSVC ABI][abi],
+you might want to switch from the default stable toolchain on Windows, which
+targets the 32-bit x86 architecture and the GNU ABI, to the a stable toolchain
+that targets the 64-bit, MSVC ABI.
 
 [abi]: https://www.rust-lang.org/downloads.html#win-foot
 
@@ -209,33 +164,6 @@ days). Target triples are the basic way we refer to particular common platforms;
 compilers for 14, and standard libraries for 30 [†].
 
 [†]: #appendix-rustup-supported-platforms
-
-## One standard library is not enough!
-
-To start cross-compiling, you need to acquire a standard library for the target
-platform. Previously, this was an error-prone, manual process&mdash;queue those
-blog posts I mentioned earlier. But with rustup, it's just part of the usual
-workflow:
-
-```
-TODO: screencast of ridiculous combination of targets
-$ rustup show
-installed targets for stable-x86_64-unknown-linux-gnu
------------------------------------------------------
-
-x86_64-unknown-linux-gnu
-i686-unknown-linux-gnu
-etc.
-
-active toolchain
-----------------
-
-stable-x86_64-unknown-linux-gnu (default)
-
-rustc 1.8.0 (db2939409 2016-04-11)
-```
-
-TODO: implement 'show'
 
 ## Example: Building static binaries on Linux
 
@@ -310,8 +238,13 @@ error: Could not compile `hello`.
 The error tells us that the compiler can't find `std`. That is of
 course because we haven't installed it.
 
+To start cross-compiling, you need to acquire a standard library for the target
+platform. Previously, this was an error-prone, manual process&mdash;queue those
+blog posts I mentioned earlier. But with rustup, it's just part of the usual
+workflow:
+
 ```
-$ rustup target add x86_64-unknown-linux-gnu
+$ rustup target add x86_64-unknown-linux-musl
 info: downloading component 'rust-std' for 'x86_64-unknown-linux-musl'
 info: installing component 'rust-std' for 'x86_64-unknown-linux-musl'
 $ rustup show
