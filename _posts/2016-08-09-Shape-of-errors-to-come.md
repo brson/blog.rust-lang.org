@@ -6,7 +6,7 @@ author: Jonathan Turner
 
 There are changes afoot in the Rust world. If you've tried out the latest nightly, you'll notice
 something is *a little different*. For the past few months we've been working on new way of
-reporting errors that's easier to read and understand. This is part of an on-going compaign to
+reporting errors that's easier to read and understand. This is part of an on-going campaign to
 improve Rust's usability across the board.
 
 Let's dive in and see what's changed!  We'll start with a simple example:
@@ -26,19 +26,18 @@ Sure enough, the error the previous compiler gave us says pretty much that:
 ![Picture of old error style][old_errors]
 
 The problem though is that it takes a few seconds to look at the message, orient yourself, and find
-the critical pieces. This time loss adds up. What if, instead, we cleared away everything slows
+the critical pieces. This time loss adds up. What if, instead, we cleared away everything that slows
 down how you read the error message?
 
 <img src="/images/2016-08-09-Errors/new_errors.png" width="500" />
 
-This is the new error format now available. It's designed to around the fundamental observation that
+This is the new error format. It's designed around the fundamental observation that
 errors should **focus on the code you wrote**. By doing so, you can much more easily see the context
 of what is going on.
 
 # Design
 
-As mentioned earlier, the key insight is putting your source code front and center.
-Everything else in the design builds your code. You'll notice that just focusing on your code can
+The key insight is putting your source code front and center - everything you see in the output builds on _your_ code. Hopefully you'll agree that this focus
 make a big difference in readability.
 
 Once we had that piece, we added labels for points of interest in the code. The most obvious place
@@ -49,7 +48,7 @@ to label is where the error is occuring. It's the "what" of the error.
 *Constant evaluation errors*
 
 By putting a label directly on what is wrong, your eyes can see both the area and read the label.
-Since this is the most important places to see first, we give them a bold red look with a
+Since this is one of the most important places in the code to look, we give them a bold red look with a
 characteristic `^^^` underline. You'll notice in the example above that the combination allows you
 to quickly spot the error and understand what's going wrong.
 
